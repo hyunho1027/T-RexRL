@@ -6,7 +6,6 @@ import time
 import webbrowser
 
 class Env:
-
     def __init__(self):
         print("LET\'S START!")
         self.done_mem = True
@@ -24,7 +23,7 @@ class Env:
         self.num = 0
         self.done_mem=True
         pag.press('enter')
-        state = np.r_[self.capture(),self.capture()]
+        state = np.reshape(np.r_[self.capture(),self.capture()], (1,128,128,1))
         return state
 
     def isDone(self):
@@ -45,7 +44,7 @@ class Env:
         pag.keyUp(key)
     
         done = self.isDone()
-        state = np.r_[self.capture(),self.capture()]
+        state = np.reshape(np.r_[self.capture(),self.capture()], (1,128,128,1))
         reward = -100.0 if done else 1
         return state, reward, done
     
