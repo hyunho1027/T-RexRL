@@ -9,21 +9,19 @@ class Env:
     def __init__(self):
         print("LET\'S START!")
         self.done_mem = True
-        self.num = 0
         self.epoch = -1
         # Open T-Rex Game.
         webbrowser.open("http://www.trex-game.skipser.com/")
-        time.sleep(1)
+        time.sleep(3)
         # Full Screen mode
         pag.press('f11')
-        time.sleep(3)
+        time.sleep(1)
 
     def reset(self):
         self.epoch += 1
-        self.num = 0
         self.done_mem=True
         pag.press('enter')
-        state = np.reshape(np.r_[self.capture(),self.capture()], (128,128,1))
+        state = np.dstack((self.capture(),self.capture()))
         return state
 
     def isDone(self):
@@ -44,8 +42,8 @@ class Env:
         pag.keyUp(key)
     
         done = self.isDone()
-        state = np.reshape(np.r_[self.capture(),self.capture()], (128,128,1))
-        reward = -1 if done else 0.1
+        state = np.dstack((self.capture(),self.capture()))
+        reward = -100 if done else 1
         return state, reward, done
     
     def capture(self):
@@ -55,10 +53,11 @@ class Env:
         screen = screen[screen.shape[0]//6:screen.shape[0]//3,screen.shape[1]//3:-screen.shape[1]//3]
         screen = cv2.resize(screen, dsize=(128, 64))
         screen = 255 - screen
+        # cv2.imwrite(f'./screen/img_{self.epoch}_{e-s}.png', screen)
+        screen = (screen - 128)/128
         e = time.time()
-        # cv2.imwrite(f'./screen/img_{self.epoch}_{self.num}_{e-s}.png', screen)
-        self.num +=1
         return screen
 
     def close(self):
+        pag.press('f11')
         pag.hotkey('ctrl', 'w')

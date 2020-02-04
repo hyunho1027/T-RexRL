@@ -2,8 +2,9 @@ import tensorflow as tf
 import numpy as np
 from collections import deque
 import random
+import warnings
+warnings.simplefilter('ignore')
 
-tf.keras.backend.set_floatx('float64')
 class Net(tf.keras.Model):
     def __init__(self):
         super(Net, self).__init__()
@@ -19,14 +20,14 @@ class Net(tf.keras.Model):
         self.dense3 = tf.keras.layers.Dense(2)
 
     def call(self, s):
-        s = (np.array(s)-128)/128    # None, 128, 128, 1
-        s = self.conv1(s)    # None, 128, 128, 64
-        s = self.maxpool1(s) # None, 64, 64, 64
-        s = self.conv2(s)    # None, 64, 64, 64
-        s = self.maxpool2(s) # None, 32, 32, 64
-        s = self.conv3(s)    # None, 32, 32, 64
-        s = self.maxpool3(s) # None, 16, 16, 64
-        s = self.flat(s)     # None, 16*16*64
+        s = tf.convert_to_tensor(s, tf.float32)
+        s = self.conv1(s)    # None, 64, 128, 64
+        s = self.maxpool1(s) # None, 32, 64, 64
+        s = self.conv2(s)    # None, 32, 64, 64
+        s = self.maxpool2(s) # None, 16, 32, 64
+        s = self.conv3(s)    # None, 16, 32, 64
+        s = self.maxpool3(s) # None, 8, 16, 64
+        s = self.flat(s)     # None, 8*16*64
         s = self.dense1(s)   # None, 64
         s = self.dense2(s)   # None, 64
         q = self.dense3(s)   # None, 64
@@ -39,7 +40,7 @@ class DQN:
         self.target_net = Net()
 
         self.mem = deque(maxlen=5000)
-        self.batch_size = 16
+        self.batch_size = 64
 
         self.e_init = 0.8
         self.e_min = 0.1
@@ -52,35 +53,33 @@ class DQN:
         self.optimizer = tf.keras.optimizers.Adam(self.lr)
 
     def get_action(self, s):
-        return tf.argmax(self.net(s), axis=1) if tf.random.uniform([1],0,1) > self.e \
-                             else tf.math.round(tf.random.uniform([1],0,1))
+        return tf.argmax(self.net(s), axis=1) if tf.random.uniform([],0,1).numpy() > self.e \
+                             else tf.math.round(tf.random.uniform([],0,1).numpy())
         
     def append_sample(self, s, a, r, ns, d):
         self.mem.append((s,a,r,ns,d))
 
-    def compute_loss(self, true, pred):
-        tf.keras.losses.Huber(true, pred)
-        return loss
-    
-    @tf.function
     def train(self):
         if len(self.mem) < self.batch_size:
-            return 0
+            return None
             
         self.e = self.e *self.e_decay if self.e > self.e_min else self.e
 
-        mini = np.array(random.sample(self.mem, self.batch_size))
-        s, a, r, ns, d = mini[:,0], mini[:,1], mini[:,2], mini[:,3], mini[:,4]
+        mini = random.sample(self.mem, self.batch_size)
+        s = [m[0] for m in mini]
+        a = [m[1] for m in mini]
+        r = [m[2] for m in mini]
+        ns = [m[3] for m in mini]
+        d = [m[4] for m in mini]
 
         with tf.GradientTape() as tape:
             q = self.net(s)
-            q_ns = self.target_net(ns)
-
-            target_q = tf.identity(q)
+            q_ns = self.target_net(ns).numpy()
+            target_q = tf.identity(q).numpy()
             for i in range(self.batch_size):
-                target_q[a[i]] = r[i] + self.gamma*(1-d[i])*q_ns[i]
+                target_q[a[i]] = r[i] if d[i] else r[i] + self.gamma*q_ns[i]
 
-            loss = self.compute_loss(target_q, q)
+            loss = tf.reduce_sum(tf.square(target_q - q))
             grads = tape.gradient(loss, self.net.trainable_weights)
             self.optimizer.apply_gradients(zip(grads, self.net.trainable_weights))
         return loss
@@ -89,14 +88,12 @@ class DQN:
         self.target_net.set_weights(self.net.get_weights())
 
     def save(self, path):
-        path = path+'/' if path[-1]!='/' else path
-        self.net.save_weight(path+"net")
-        self.tg_net.save_weight(path+"target")
+        self.net.save_weights(path+"net")
+        self.target_net.save_weights(path+"target_net")
 
     def load(self, path):
-        path = path+'/' if path[-1]!='/' else path
-        self.net.load_weight(path+"net")
-        self.tg_net.load_weight(path+"target")
+        self.net.load_weights(path+"net")
+        self.target_net.load_weights(path+"target_net")
 
 if __name__=="__main__":
     net = Net()
