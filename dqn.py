@@ -39,11 +39,11 @@ class DQN:
         self.target_net = Net()
 
         self.mem = deque(maxlen=5000)
-        self.batch_size = 64
+        self.batch_size = 16
 
         self.e_init = 0.8
         self.e_min = 0.1
-        self.e_dcay = 0.99
+        self.e_decay = 0.99
         self.e = self.e_init
 
         self.gamma = 0.99
@@ -64,9 +64,12 @@ class DQN:
     
     @tf.function
     def train(self):
+        if len(self.mem) < self.batch_size:
+            return 0
+            
         self.e = self.e *self.e_decay if self.e > self.e_min else self.e
 
-        mini = tf.constant(random.sample(self.mem, self.batch_size))
+        mini = np.array(random.sample(self.mem, self.batch_size))
         s, a, r, ns, d = mini[:,0], mini[:,1], mini[:,2], mini[:,3], mini[:,4]
 
         with tf.GradientTape() as tape:
@@ -80,6 +83,7 @@ class DQN:
             loss = self.compute_loss(target_q, q)
             grads = tape.gradient(loss, self.net.trainable_weights)
             self.optimizer.apply_gradients(zip(grads, self.net.trainable_weights))
+        return loss
     
     def update_target(self):
         self.target_net.set_weights(self.net.get_weights())

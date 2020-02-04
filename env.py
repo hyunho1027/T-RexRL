@@ -23,7 +23,7 @@ class Env:
         self.num = 0
         self.done_mem=True
         pag.press('enter')
-        state = np.reshape(np.r_[self.capture(),self.capture()], (1,128,128,1))
+        state = np.reshape(np.r_[self.capture(),self.capture()], (128,128,1))
         return state
 
     def isDone(self):
@@ -44,8 +44,8 @@ class Env:
         pag.keyUp(key)
     
         done = self.isDone()
-        state = np.reshape(np.r_[self.capture(),self.capture()], (1,128,128,1))
-        reward = -100.0 if done else 1
+        state = np.reshape(np.r_[self.capture(),self.capture()], (128,128,1))
+        reward = -1 if done else 0.1
         return state, reward, done
     
     def capture(self):
