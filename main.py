@@ -10,7 +10,7 @@ for ep in range(10000):
     while not d:
         a = agent.get_action(s)
         ns, r, d = env.step(a)
-        print(s.shape, a, ns.shape, r, d)
+        #print(s.shape, a, ns.shape, r, d)
         agent.append_sample(s,a,r,ns,d)
         s = ns
 
