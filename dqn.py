@@ -49,7 +49,7 @@ class DQN:
 
         self.gamma = 0.99
 
-        self.lr = 3e-4
+        self.lr = 1e-3
         self.optimizer = tf.keras.optimizers.Adam(self.lr)
 
     def get_action(self, s):

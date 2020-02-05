@@ -21,6 +21,7 @@ class Env:
         self.epoch += 1
         self.done_mem=True
         pag.press('enter')
+        time.sleep(1)
         state = np.dstack((self.capture(),self.capture()))
         return state
 
@@ -37,13 +38,14 @@ class Env:
 
     def step(self, action):
         key = 'up' if action == 1 else 'down'
-        pag.keyDown(key)
-        time.sleep(0.1)
-        pag.keyUp(key)
+        pag.press(key)
+        # pag.keyDown(key)
+        # time.sleep(0.1)
+        # pag.keyUp(key)
     
         done = self.isDone()
         state = np.dstack((self.capture(),self.capture()))
-        reward = -100 if done else 1
+        reward = -1 if done else 0.1
         return state, reward, done
     
     def capture(self):

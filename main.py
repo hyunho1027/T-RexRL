@@ -18,16 +18,16 @@ try:
             s = ns
             score += r
         
-        if True:#ep > 100:
+        if ep > 100:
             loss = agent.train()
-            print(f"{ep} Epi / Loss : {loss} / Score : {score+100}")
+            print(f"{ep} Epi / Loss : {loss} / Score : {score+10}")
 
-            if not ep%2 and loss is not None:
+            if not ep%10 and loss is not None:
                 agent.update_target()
-            if not ep%2 and loss is not None:
+            if not ep%20 and loss is not None:
                 agent.save("./models/")
         else:
-            print(f"{ep} Epi / Score : {score+100}")
+            print(f"{ep} Epi / Score : {score+10}")
 
 except Exception as e:
     traceback.print_exc()
