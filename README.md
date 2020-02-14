@@ -16,8 +16,8 @@ This environment provides only visual observation
 ### Visual Observation
 <img src="./resrc/capture_screen.png" width=256>
 
-shape: (64, 128, 2)
-(* stack 2 capture screens)
+Shape: (64, 128, 2)  
+(*Stack 2 capture screens)
 
 ## Action
 Jump(1) or Duck(0)
