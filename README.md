@@ -14,7 +14,7 @@ The agent is T-Rex
 This environment provides only visual observation
 
 ### Visual Observation
-<img src="./resrc/sample_screen.png" width=256>
+<img src="./resrc/capture_screen.png" width=256>
 
 shape: (64, 128, 2)
 (* stack 2 capture screens)
