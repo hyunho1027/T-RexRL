@@ -86,11 +86,10 @@ class DQN:
 
     def save(self, path):
         self.net.save_weights(path+"net")
-        self.target_net.save_weights(path+"target_net")
 
     def load(self, path):
         self.net.load_weights(path+"net")
-        self.target_net.load_weights(path+"target_net")
+        self.target_net.set_weights(self.net.get_weights())
 
 if __name__=="__main__":
     net = Net()
