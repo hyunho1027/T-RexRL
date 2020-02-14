@@ -22,7 +22,7 @@ class Env:
         self.done_mem=True
         pag.press('f5')
         time.sleep(1)
-        pag.press('enter')
+        pag.press('space')
         state = np.dstack((self.capture(),self.capture()))
         return state
 
