@@ -20,7 +20,7 @@ try:
         
         if ep > 100:
             loss = agent.train()
-            print(f"{ep} Epi / Loss : {loss} / Score : {score+1}")
+            print(f"{ep} Epi / Loss : {loss} / Score : {score}")
 
             if not ep%10 and loss is not None:
                 agent.update_target()
