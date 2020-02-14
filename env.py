@@ -23,7 +23,6 @@ class Env:
         pag.press('f5')
         time.sleep(1)
         pag.press('enter')
-        time.sleep(3)
         state = np.dstack((self.capture(),self.capture()))
         return state
 

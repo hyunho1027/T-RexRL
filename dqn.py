@@ -38,13 +38,14 @@ class DQN:
     def __init__(self):
         self.net = Net()
         self.target_net = Net()
+        self.update_target()
 
         self.mem = deque(maxlen=5000)
         self.batch_size = 64
 
         self.e_init = 0.8
         self.e_min = 0.1
-        self.e_decay = 0.99
+        self.e_decay = 0.999
         self.e = self.e_init
 
         self.gamma = 0.99
