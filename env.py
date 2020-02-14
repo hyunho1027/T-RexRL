@@ -20,6 +20,8 @@ class Env:
     def reset(self):
         self.epoch += 1
         self.done_mem=True
+        pag.press('f5')
+        time.sleep(1)
         pag.press('enter')
         time.sleep(1)
         state = np.dstack((self.capture(),self.capture()))
@@ -38,7 +40,13 @@ class Env:
 
     def step(self, action):
         key = 'up' if action == 1 else 'down'
-        pag.press(key)
+        
+        pag.keyUp('up')
+        pag.keyUp('down')
+        pag.keyDown(key)
+        
+        # pag.press(key)
+
         # pag.keyDown(key)
         # time.sleep(0.1)
         # pag.keyUp(key)
