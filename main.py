@@ -18,7 +18,7 @@ try:
             s = ns
             score += r
         
-        if ep > 0:
+        if ep > 100:
             loss = agent.train()
             print(f"{ep} Epi / Loss : {loss} / Score : {score+10}")
 

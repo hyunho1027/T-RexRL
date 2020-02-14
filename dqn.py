@@ -40,7 +40,7 @@ class DQN:
         self.target_net = Net()
 
         self.mem = deque(maxlen=5000)
-        self.batch_size = 4
+        self.batch_size = 64
 
         self.e_init = 0.8
         self.e_min = 0.1
