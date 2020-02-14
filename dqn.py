@@ -40,7 +40,7 @@ class DQN:
         self.target_net = Net()
 
         self.mem = deque(maxlen=5000)
-        self.batch_size = 64
+        self.batch_size = 4
 
         self.e_init = 0.8
         self.e_min = 0.1
@@ -53,8 +53,8 @@ class DQN:
         self.optimizer = tf.keras.optimizers.Adam(self.lr)
 
     def get_action(self, s):
-        return tf.argmax(self.net(s), axis=1) if tf.random.uniform([],0,1).numpy() > self.e \
-                             else tf.math.round(tf.random.uniform([],0,1).numpy())
+        return tf.argmax(self.net(s), axis=1)[0] \
+                    if random.random() > self.e else round(random.random())
         
     def append_sample(self, s, a, r, ns, d):
         self.mem.append((s,a,r,ns,d))
@@ -73,12 +73,9 @@ class DQN:
         d = [m[4] for m in mini]
 
         with tf.GradientTape() as tape:
-            q = self.net(s)
-            q_ns = self.target_net(ns).numpy()
-            target_q = tf.identity(q).numpy()
-            for i in range(self.batch_size):
-                target_q[a[i]] = r[i] if d[i] else r[i] + self.gamma*q_ns[i]
-
+            q = tf.reduce_sum(self.net(s)*tf.one_hot(a, 2), axis=1)
+            q_ns = tf.reduce_max(self.target_net(ns), axis=1)
+            target_q = r + (1 - tf.constant(d, tf.float32))*self.gamma*q_ns
             loss = tf.reduce_sum(tf.square(target_q - q))
             grads = tape.gradient(loss, self.net.trainable_weights)
             self.optimizer.apply_gradients(zip(grads, self.net.trainable_weights))
