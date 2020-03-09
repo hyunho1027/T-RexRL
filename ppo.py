@@ -1,4 +1,5 @@
 import tensorflow as tf
+import numpy as np
 from collections import deque
 import random
 from PIL import Image
@@ -6,7 +7,6 @@ import traceback
 import warnings
 from env import Env
 warnings.simplefilter('ignore')
-
 
 class AttentionCNN(tf.keras.Model):
     def __init__(self):
@@ -19,8 +19,8 @@ class AttentionCNN(tf.keras.Model):
         self.beta = tf.Variable(tf.zeros([self.fSize]), trainable=False)
         self.gamma = tf.Variable(tf.ones([self.fSize]), trainable=False)
 
-        self.attentionCNN1 = tf.keras.layers.Conv2D(filters=self.fSize//2, kernel_size=[3, 3], padding='same', activation=tf.nn.relu)
-        self.attentionCNN2 = tf.keras.layers.Conv2D(filters=self.fSize, kernel_size=[3, 3], padding='same', activation=tf.nn.relu)
+        self.attentionCNN1 = tf.keras.layers.Conv2D(filters=self.fSize//2, kernel_size=[3,3], strides=[2,2], padding='same', activation='relu')
+        self.attentionCNN2 = tf.keras.layers.Conv2D(filters=self.fSize, kernel_size=[3,3], strides=[2,2], padding='same', activation='relu')
 
         self.Q = tf.keras.layers.Dense(self.fSize, activation='relu')
         self.K = tf.keras.layers.Dense(self.fSize, activation='relu')
@@ -28,8 +28,9 @@ class AttentionCNN(tf.keras.Model):
 
         self.O1 = tf.keras.layers.Dense(self.hSize, activation='relu')
         self.O2 = tf.keras.layers.Dense(self.hSize, activation='relu')
-        self.O3 = tf.keras.layers.Dense(self.hSize, activation='relu')
-        self.O4 = tf.keras.layers.Dense(self.oSize)
+
+        self.pi = tf.keras.layers.Dense(self.oSize, activation='softmax')
+        self.v = tf.keras.layers.Dense(1)
 
     def call(self, x):
         x = tf.convert_to_tensor(x, tf.float32)
@@ -39,8 +40,8 @@ class AttentionCNN(tf.keras.Model):
         A, attentionWeight, shape = self.selfAttention(normalizedQKV[0], normalizedQKV[1], normalizedQKV[2])
         residualAE = self.residual(A, E, 2)
         maxResidualAE = self.featureWiseMax(residualAE)
-        out = self.outputLayer(maxResidualAE)
-        return out, attentionWeight
+        pi, v = self.outputLayer(maxResidualAE)
+        return pi, v, attentionWeight
 
     def attentionCNN(self, x):
         x = self.attentionCNN1(x)
@@ -65,8 +66,7 @@ class AttentionCNN(tf.keras.Model):
     def outputLayer(self, x):
         x = self.O1(x)
         x = self.O2(x)
-        x = self.O3(x)
-        return self.O4(x)
+        return self.pi(x), self.v(x)
 
     def layerNormalization(self, x):
         featureShape = x.shape[-1:]
@@ -81,77 +81,84 @@ class AttentionCNN(tf.keras.Model):
     
     def featureWiseMax(self, x):
         return tf.reduce_max(x, axis=2)
-
-class DQN:
+        
+class PPO:
     def __init__(self):
         self.net = AttentionCNN()
-        self.target_net = AttentionCNN()
-        self.update_target()
 
-        self.mem = deque(maxlen=50000)
+        self.mem = []
         self.batch_size = 64
 
-        self.e_init = 0.8
-        self.e_min = 0.05
-        self.e_decay = 0.9995
-        self.e = self.e_init
-
         self.gamma = 0.99
+        self._lambda = 0.95
+        self.epoch = 3
+        self.epsilon = 0.1
 
-        self.lr = 2e-5
+        self.lr = 5e-5
         self.optimizer = tf.keras.optimizers.Adam(self.lr)
 
     def get_action(self, s):
-        return tf.argmax(self.net(s)[0], axis=1)[0] if random.random() > self.e else round(random.random())
+        pi, v, _ = self.net(s)
+        a = np.random.choice(self.net.oSize, p=pi[0].numpy())
+        return a, pi, v
 
     def get_attention(self, s):
-        attention = self.net(s)[1]
+        attention = self.net(s)[2]
         attention = tf.reduce_sum(attention[0], axis=0)
-        attention = tf.reshape(attention, [64, 128])
+        attention = tf.reshape(attention, [16, 32])
         attention = tf.cast((attention * 255), tf.uint8)
         attention = Image.fromarray(attention.numpy(), 'L')
-        # attention = attention.resize((128,64), resample=Image.NEAREST)
+        attention = attention.resize((128,64), resample=Image.NEAREST)
         return attention
 
-    def append_sample(self, s, a, r, ns, d):
-        self.mem.append((s,a,r,ns,d))
+    def append_sample(self,s,a,pi,r,d):
+        self.mem.append((s,a,pi,r,d))
 
     def train(self):
         if len(self.mem) < self.batch_size:
             return None
-            
-        self.e = self.e *self.e_decay if self.e > self.e_min else self.e
+        s = [m[0] for m in self.mem]
+        a = [[m[1]] for m in self.mem]
+        old_pi = [m[2][0] for m in self.mem]
+        r = [[m[3]] for m in self.mem]
+        d = [[1] if m[4] else [0] for m in self.mem]
+        old_pi,r,d = map(lambda x: tf.convert_to_tensor(x, tf.float32), [old_pi,r,d])
+        one_hot_a = tf.squeeze(tf.one_hot(a, self.net.oSize, dtype=tf.float32))
+        old_pi_a = tf.reduce_sum(one_hot_a * old_pi, axis=1)
+        losses = []
+        for _ in range(self.epoch):
+            with tf.GradientTape() as tape:
+                pi, v, _ = self.net(s)
+                nv = tf.concat([v[1:], [[0]]], axis=0)
+                target = r + self.gamma*(1 - d)*nv
+                delta = target - v
+                adv = delta.numpy()
+                for t in reversed(range(delta.shape[0] - 1)):
+                    adv[t] += (1 - d[t])*self.gamma*self._lambda*adv[t+1]
 
-        mini = random.sample(self.mem, self.batch_size)
-        s = [m[0] for m in mini]
-        a = [m[1] for m in mini]
-        r = [m[2] for m in mini]
-        ns = [m[3] for m in mini]
-        d = [m[4] for m in mini]
+                pi_a = tf.reduce_sum(one_hot_a * pi, axis=1)
+                ratio = tf.exp(tf.math.log(old_pi_a) - tf.math.log(pi_a))
+                surr1 = ratio * adv
+                surr2 = tf.clip_by_value(ratio, 1-self.epsilon, 1+self.epsilon) * adv
+                pi_loss = tf.minimum(surr1, surr2)
+                v_loss = tf.reduce_mean(tf.square(target - v))
+                loss = pi_loss + v_loss
 
-        with tf.GradientTape() as tape:
-            q = tf.reduce_sum(self.net(s)[0]*tf.one_hot(a, 2), axis=1)
-            q_ns = tf.reduce_max(self.target_net(ns)[0], axis=1)
-            target_q = r + (1 - tf.constant(d, tf.float32))*self.gamma*q_ns
-            loss = tf.reduce_sum(tf.square(target_q - q))
             grads = tape.gradient(loss, self.net.trainable_weights)
             self.optimizer.apply_gradients(zip(grads, self.net.trainable_weights))
-        return loss
+            losses.append(loss)
+        self.mem=[]
+        return tf.reduce_mean(losses)
     
-    def update_target(self):
-        self.target_net.set_weights(self.net.get_weights())
-
     def save(self, path):
-        self.net.save_weights(path+"dqn")
+        self.net.save_weights(path+"ppo")
 
     def load(self, path):
-        self.net.load_weights(path+"dqn")
-        self.target_net.set_weights(self.net.get_weights())
-        
+        self.net.load_weights(path+"ppo")
+
 if __name__=="__main__":
-    agent = DQN()
+    agent = PPO()
     env = Env()
-    loss = None
 
     try:
         for ep in range(10000):
@@ -159,21 +166,18 @@ if __name__=="__main__":
             score = 0
             s = env.reset()
             while not d:
-                a = agent.get_action([s])
+                a, pi, _ = agent.get_action([s])
                 ns, r, d = env.step(a)
-                # print(s.shape, a, ns.shape, r, d)
+
                 if score > 1:
-                    agent.append_sample(s,a,r,ns,d)
-                if not d:
-                    s = ns
+                    agent.append_sample(s,a,pi,r,d)
+                
+                s = ns
                 score += r
             
-                if ep > 500:
-                    loss = agent.train()
+            loss = agent.train()
+            agent.get_attention([s]).save(f"./attention/ppo/{ep}.png")
 
-            agent.get_attention([s]).save(f"./attention/{ep}.png")
-            if not ep%10 and loss is not None:
-                agent.update_target()
             if not ep%20 and loss is not None:
                 agent.save("./models/")
 

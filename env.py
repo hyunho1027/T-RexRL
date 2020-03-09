@@ -20,8 +20,9 @@ class Env:
     def reset(self):
         self.epoch += 1
         self.done_mem=True
-        pag.press('f5')
-        time.sleep(1)
+        if self.epoch % 10 == 0:
+            pag.press('f5')
+            time.sleep(1)
         pag.press('space')
         state = np.dstack((self.capture(),self.capture()))
         return state
@@ -44,12 +45,6 @@ class Env:
         pag.keyUp('down')
         pag.keyDown(key)
         
-        # pag.press(key)
-
-        # pag.keyDown(key)
-        # time.sleep(0.1)
-        # pag.keyUp(key)
-    
         done = self.isDone()
         state = np.dstack((self.capture(),self.capture()))
         reward = -1 if done else 0.1
