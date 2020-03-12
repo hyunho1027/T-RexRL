@@ -69,7 +69,6 @@ class AttentionCNN(tf.keras.Model):
         return self.pi(x), self.v(x)
 
     def layerNormalization(self, x):
-        featureShape = x.shape[-1:]
         mean, variance = tf.nn.moments(x, [2], keepdims=True)
         return self.gamma * (x - mean) / tf.sqrt(variance + 1e-8) + self.beta
     
