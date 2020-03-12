@@ -38,7 +38,7 @@ class PPO:
         self.epoch = 3
         self.epsilon = 0.1
         self.n_step = 32
-        self.lr = 5e-5
+        self.lr = 3e-4
         self.optimizer = tf.keras.optimizers.Adam(self.lr)
 
     def get_action(self, s):
