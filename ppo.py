@@ -14,7 +14,7 @@ class AttentionCNN(tf.keras.Model):
         self.iSize = (64, 128, 2)
         self.hSize = 64
         self.oSize = 2
-        self.fSize = 8
+        self.fSize = 24
 
         self.beta = tf.Variable(tf.zeros([self.fSize]), trainable=False)
         self.gamma = tf.Variable(tf.ones([self.fSize]), trainable=False)
@@ -85,15 +85,11 @@ class AttentionCNN(tf.keras.Model):
 class PPO:
     def __init__(self):
         self.net = AttentionCNN()
-
         self.mem = []
-        self.batch_size = 64
-
         self.gamma = 0.99
         self._lambda = 0.95
         self.epoch = 3
         self.epsilon = 0.1
-
         self.lr = 5e-5
         self.optimizer = tf.keras.optimizers.Adam(self.lr)
 
@@ -115,7 +111,7 @@ class PPO:
         self.mem.append((s,a,pi,r,d))
 
     def train(self):
-        if len(self.mem) < self.batch_size:
+        if len(self.mem) < 2:
             return None
         s = [m[0] for m in self.mem]
         a = [[m[1]] for m in self.mem]
@@ -130,20 +126,19 @@ class PPO:
             with tf.GradientTape() as tape:
                 pi, v, _ = self.net(s)
                 nv = tf.concat([v[1:], [[0]]], axis=0)
-                target = r + self.gamma*(1 - d)*nv
+                target = r + self.gamma*(1.0 - d)*nv
                 delta = target - v
                 adv = delta.numpy()
                 for t in reversed(range(delta.shape[0] - 1)):
-                    adv[t] += (1 - d[t])*self.gamma*self._lambda*adv[t+1]
+                    adv[t] += (1.0 - d[t])*self.gamma*self._lambda*adv[t+1]
 
                 pi_a = tf.reduce_sum(one_hot_a * pi, axis=1)
-                ratio = tf.exp(tf.math.log(old_pi_a) - tf.math.log(pi_a))
+                ratio = tf.exp(tf.math.log(pi_a) - tf.math.log(old_pi_a))
                 surr1 = ratio * adv
-                surr2 = tf.clip_by_value(ratio, 1-self.epsilon, 1+self.epsilon) * adv
+                surr2 = tf.clip_by_value(ratio, 1.0-self.epsilon, 1.0+self.epsilon) * adv
                 pi_loss = tf.minimum(surr1, surr2)
                 v_loss = tf.reduce_mean(tf.square(target - v))
                 loss = pi_loss + v_loss
-
             grads = tape.gradient(loss, self.net.trainable_weights)
             self.optimizer.apply_gradients(zip(grads, self.net.trainable_weights))
             losses.append(loss)
@@ -169,7 +164,7 @@ if __name__=="__main__":
                 a, pi, _ = agent.get_action([s])
                 ns, r, d = env.step(a)
 
-                if score > 1:
+                if score > 0.5:
                     agent.append_sample(s,a,pi,r,d)
                 
                 s = ns
