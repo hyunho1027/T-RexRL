@@ -40,5 +40,5 @@ git clone https://github.com/hyunho1027/T-RexRL
 
 ## Usage
 ```cmd
-python main.py
+python ppo.py
 ```
