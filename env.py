@@ -27,7 +27,7 @@ class Env:
         state = np.dstack((self.capture(),self.capture()))
         return state
 
-    def isDone(self):
+    def is_done(self):
         screen = ImageGrab.grab().convert('L')
         screen = np.array(screen)
         # Check the Bottom of Screen
@@ -45,7 +45,7 @@ class Env:
         pag.keyUp('down')
         pag.keyDown(key)
         
-        done = self.isDone()
+        done = self.is_done()
         state = np.dstack((self.capture(),self.capture()))
         reward = -1 if done else 0.1
         return state, reward, done

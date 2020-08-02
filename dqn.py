@@ -60,23 +60,28 @@ class DQN:
             return None
             
         self.e = self.e *self.e_decay if self.e > self.e_min else self.e
-
         mini = random.sample(self.mem, self.batch_size)
-        s = [m[0] for m in mini]
-        a = [m[1] for m in mini]
-        r = [m[2] for m in mini]
-        ns = [m[3] for m in mini]
-        d = [m[4] for m in mini]
+        s = tf.convert_to_tensor([m[0] for m in mini])
+        a = tf.convert_to_tensor([m[1] for m in mini])
+        r = tf.convert_to_tensor([m[2] for m in mini])
+        ns = tf.convert_to_tensor([m[3] for m in mini])
+        d = tf.convert_to_tensor([m[4] for m in mini])
 
+        return self.train_step(s,a,r,ns,d)
+
+    @tf.function
+    def train_step(self, s, a, r, ns, d):
         with tf.GradientTape() as tape:
             q = tf.reduce_sum(self.net(s)*tf.one_hot(a, 2), axis=1)
-            q_ns = tf.reduce_max(self.target_net(ns), axis=1)
-            target_q = r + (1 - tf.constant(d, tf.float32))*self.gamma*q_ns
-            loss = tf.reduce_sum(tf.square(target_q - q))
-            grads = tape.gradient(loss, self.net.trainable_weights)
-            self.optimizer.apply_gradients(zip(grads, self.net.trainable_weights))
+            next_q = tf.reduce_max(self.target_net(ns), axis=1)
+            target_q = reward + (1 - tf.cast(d, tf.float32))*self.gamma*next_q
+            delta = abs(target_q - q)
+            huber = delta + tf.cast(delta > 1, tf.float32)*(delta**2 - delta)
+            loss = tf.reduce_mean(huber)
+        grads = tape.gradient(loss, self.net.trainable_weights)
+        self.optimizer.apply_gradients(zip(grads, self.net.trainable_weights))
         return loss
-    
+
     def update_target(self):
         self.target_net.set_weights(self.net.get_weights())
 
