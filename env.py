@@ -9,7 +9,8 @@ class Env:
     def __init__(self):
         print("LET\'S START!")
         self.done_mem = True
-        self.epoch = -1
+        self.episode = -1
+        self.refresh = 10
         # Open T-Rex Game.
         webbrowser.open("http://www.trex-game.skipser.com/")
         time.sleep(3)
@@ -18,9 +19,9 @@ class Env:
         time.sleep(1)
 
     def reset(self):
-        self.epoch += 1
+        self.episode += 1
         self.done_mem=True
-        if self.epoch % 10 == 0:
+        if self.episode%self.refresh == 0:
             pag.press('f5')
             time.sleep(1)
         pag.press('space')
@@ -54,11 +55,12 @@ class Env:
         s = time.time()
         screen = ImageGrab.grab().convert('L')
         screen = np.array(screen, dtype=float)
-        screen = screen[screen.shape[0]//6:screen.shape[0]//3,screen.shape[1]//3:-screen.shape[1]//3]
+        shape = screen.shape
+        screen = screen[shape[0]//6:shape[0]//3, shape[1]//3:-shape[1]//3]
         screen = cv2.resize(screen, dsize=(128, 64))
-        screen = 255 - screen
-        # cv2.imwrite(f'./screen/img_{self.epoch}_{e-s}.png', screen)
-        screen = (screen - 128)/128
+        screen = 255-screen
+        # cv2.imwrite(f'./screen/img_{self.episode}_{e-s}.png', screen)
+        screen = screen/255.
         e = time.time()
         return screen
 

@@ -1,11 +1,6 @@
 import tensorflow as tf
 from collections import deque
 import random
-import traceback
-import warnings
-from env import Env
-warnings.simplefilter('ignore')
-
 
 class Net(tf.keras.Model):
     def __init__(self):
@@ -35,38 +30,30 @@ class DQN:
         self.net = Net()
         self.target_net = Net()
         self.update_target()
-
         self.mem = deque(maxlen=50000)
-        self.batch_size = 256
 
         self.e_init = 0.8
         self.e_min = 0.05
-        self.e_decay = 0.9995
         self.e = self.e_init
-
+        self.e_decay = 0.995
         self.gamma = 0.99
 
-        self.lr = 3e-4
+        self.lr = 2e-5
         self.optimizer = tf.keras.optimizers.Adam(self.lr)
 
     def get_action(self, s):
-        return tf.argmax(self.net(s), axis=1)[0] if random.random() > self.e else round(random.random())
+        return tf.argmax(self.net(s), axis=1)[0] if random.random() > self.e else random.randint(0,1)
 
     def append_sample(self, s, a, r, ns, d):
         self.mem.append((s,a,r,ns,d))
 
     def train(self):
-        if len(self.mem) < self.batch_size:
-            return None
-            
-        self.e = self.e *self.e_decay if self.e > self.e_min else self.e
-        mini = random.sample(self.mem, self.batch_size)
+        mini = random.sample(self.mem, min(len(self.mem), self.batch_size))
         s = tf.convert_to_tensor([m[0] for m in mini])
         a = tf.convert_to_tensor([m[1] for m in mini])
         r = tf.convert_to_tensor([m[2] for m in mini])
         ns = tf.convert_to_tensor([m[3] for m in mini])
         d = tf.convert_to_tensor([m[4] for m in mini])
-
         return self.train_step(s,a,r,ns,d)
 
     @tf.function
@@ -74,7 +61,7 @@ class DQN:
         with tf.GradientTape() as tape:
             q = tf.reduce_sum(self.net(s)*tf.one_hot(a, 2), axis=1)
             next_q = tf.reduce_max(self.target_net(ns), axis=1)
-            target_q = reward + (1 - tf.cast(d, tf.float32))*self.gamma*next_q
+            target_q = r + (1 - tf.cast(d, tf.float32))*self.gamma*next_q
             delta = abs(target_q - q)
             huber = delta + tf.cast(delta > 1, tf.float32)*(delta**2 - delta)
             loss = tf.reduce_mean(huber)
@@ -85,41 +72,13 @@ class DQN:
     def update_target(self):
         self.target_net.set_weights(self.net.get_weights())
 
+    def epsilon_decay(self):
+        self.e = max(self.e_min, self.e*self.e_decay)
+
     def save(self, path):
-        self.net.save_weights(path+"dqn")
+        self.net.save_weights(path)
 
     def load(self, path):
-        self.net.load_weights(path+"dqn")
+        self.net.load_weights(path)
         self.target_net.set_weights(self.net.get_weights())
         
-if __name__=="__main__":
-    agent = DQN()
-    env = Env()
-    loss = None
-    try:
-        for ep in range(10000):
-            d = False
-            score = 0
-            s = env.reset()
-            while not d:
-                a = agent.get_action([s])
-                ns, r, d = env.step(a)
-                if score > 0.5:
-                    agent.append_sample(s,a,r,ns,d)
-                if not d:
-                    s = ns
-                score += r
-            
-            if ep > 100:
-                loss = agent.train()
-
-            if not ep%10 and loss is not None:
-                agent.update_target()
-            if not ep%20 and loss is not None:
-                agent.save("./models/")
-
-            print(f"{ep} Epi / Score : {score} / Loss : {loss}")
-
-    except Exception as e:
-        traceback.print_exc()
-    env.close()

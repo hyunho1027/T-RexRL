@@ -32,13 +32,13 @@ git clone https://github.com/hyunho1027/T-RexRL
 
 ## Requirements
 - Python 3.7
+- Tensorflow 2.2
 - image
-- pyautogui
-- Tensorflow 2.0
 - cv2
+- pyautogui
 - webbrowser
 
 ## Usage
 ```cmd
-python ppo.py
+python main.py
 ```
