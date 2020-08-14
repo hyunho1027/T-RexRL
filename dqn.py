@@ -30,7 +30,7 @@ class DQN:
         self.net = Net()
         self.target_net = Net()
         self.update_target()
-        self.mem = deque(maxlen=50000)
+        self.mem = deque(maxlen=5000)
 
         self.e_init = 0.8
         self.e_min = 0.05
@@ -38,6 +38,7 @@ class DQN:
         self.e_decay = 0.995
         self.gamma = 0.99
 
+        self.batch_size = 16
         self.lr = 2e-5
         self.optimizer = tf.keras.optimizers.Adam(self.lr)
 
