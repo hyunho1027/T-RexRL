@@ -11,6 +11,7 @@ class Env:
         self.done_mem = True
         self.episode = -1
         self.refresh = 10
+        self.screen = None
         # Open T-Rex Game.
         webbrowser.open("http://www.trex-game.skipser.com/")
         time.sleep(3)
@@ -24,8 +25,10 @@ class Env:
         if self.episode%self.refresh == 0:
             pag.press('f5')
             time.sleep(1)
+
         pag.press('space')
-        state = np.dstack((self.capture(),self.capture()))
+        self.screen = self.capture()
+        state = np.dstack((self.screen, self.screen))
         return state
 
     def is_done(self):
@@ -41,13 +44,12 @@ class Env:
 
     def step(self, action):
         key = 'up' if action == 1 else 'down'
-        
-        pag.keyUp('up')
-        pag.keyUp('down')
-        pag.keyDown(key)
-        
+        pag.press(key)
+
         done = self.is_done()
-        state = np.dstack((self.capture(),self.capture()))
+        _screen = self.capture()
+        state = np.dstack((self.screen, _screen))
+        self.screen = _screen
         reward = -1 if done else 0.1
         return state, reward, done
     
@@ -56,10 +58,10 @@ class Env:
         screen = ImageGrab.grab().convert('L')
         screen = np.array(screen, dtype=float)
         shape = screen.shape
+        # Optimized 1920*1080
         screen = screen[shape[0]//6:shape[0]//3, shape[1]//3:-shape[1]//3]
         screen = cv2.resize(screen, dsize=(128, 64))
         screen = 255-screen
-        # cv2.imwrite(f'./screen/img_{self.episode}_{e-s}.png', screen)
         screen = screen/255.
         e = time.time()
         return screen
@@ -67,3 +69,6 @@ class Env:
     def close(self):
         pag.press('f11')
         pag.hotkey('ctrl', 'w')
+
+    def alt_tap(self):
+        pag.keyDown('alt'); pag.press('tab') ; pag.keyUp('alt')

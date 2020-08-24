@@ -1,6 +1,7 @@
 import tensorflow as tf
 from collections import deque
 import random
+import datetime
 
 class Net(tf.keras.Model):
     def __init__(self):
@@ -33,14 +34,16 @@ class DQN:
         self.mem = deque(maxlen=5000)
 
         self.e_init = 0.8
-        self.e_min = 0.05
+        self.e_min = 0.01
         self.e = self.e_init
         self.e_decay = 0.995
         self.gamma = 0.99
 
-        self.batch_size = 16
-        self.lr = 2e-5
+        self.batch_size = 64
+        self.lr = 3e-4
         self.optimizer = tf.keras.optimizers.Adam(self.lr)
+        now = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+        self.writer = tf.summary.create_file_writer(f"./summaries/{now}")
 
     def get_action(self, s):
         return tf.argmax(self.net(s), axis=1)[0] if random.random() > self.e else random.randint(0,1)
@@ -82,4 +85,9 @@ class DQN:
     def load(self, path):
         self.net.load_weights(path)
         self.target_net.set_weights(self.net.get_weights())
-        
+    
+    def write(self, score, loss, epsilon, episode):
+        with self.writer.as_default():
+            tf.summary.scalar("model/loss", loss, step=episode)
+            tf.summary.scalar("run/score", score, step=episode)
+            tf.summary.scalar("run/epsilon", epsilon, step=episode)
