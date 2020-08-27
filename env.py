@@ -8,6 +8,7 @@ class Env:
         print("LET\'S START!")
         self.done_mem = True
         self.episode = -1
+        self._step = 0
         self.refresh = 10
         self.remember = None
         self.size = pag.screenshot().size
@@ -26,12 +27,20 @@ class Env:
 
     def reset(self):
         self.episode += 1
+        self._step = 0
         self.done_mem=True
         if self.episode%self.refresh == 0:
             pag.press('f5')
             time.sleep(1)
 
+        is_start = False
         pag.press('up')
+        while not is_start:
+            screen = pag.screenshot(region=self.done_region).convert('L')
+            screen = np.array(screen)
+            # Check the Bottom of Screen
+            is_start = (screen>128).all()
+
         screen = self.capture()
         state = np.dstack((screen, screen))
         self.remember = screen
@@ -49,6 +58,7 @@ class Env:
             return False
 
     def step(self, action):
+        self._step += 1
         key = 'up' if action == 1 else 'down'
         pag.press(key)
 
