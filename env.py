@@ -11,7 +11,6 @@ class Env:
         self.refresh = 10
         self.remember = None
         self.size = pag.screenshot().size
-        print(self.size)
         self.target_size = (128,64)
 
         # Optimized 1920*1080
