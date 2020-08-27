@@ -1,6 +1,4 @@
 import numpy as np
-from PIL import ImageGrab
-import cv2
 import pyautogui as pag
 import time
 import webbrowser
@@ -11,7 +9,14 @@ class Env:
         self.done_mem = True
         self.episode = -1
         self.refresh = 10
-        self.screen = None
+        self.remember = None
+        self.size = pag.screenshot().convert('L').size
+        self.target_size = (128,64)
+
+        # Optimized 1920*1080
+        self.state_region = (self.size[0]//3, self.size[1]//6, self.size[0]//3, self.size[1]//6)
+        self.done_region = ((self.size[0]//10)*9, (self.size[1]//10)*9, self.size[0]//10, self.size[1]//10)
+
         # Open T-Rex Game.
         webbrowser.open("http://www.trex-game.skipser.com/")
         time.sleep(3)
@@ -26,16 +31,17 @@ class Env:
             pag.press('f5')
             time.sleep(1)
 
-        pag.press('space')
-        self.screen = self.capture()
-        state = np.dstack((self.screen, self.screen))
+        pag.press('up')
+        screen = self.capture()
+        state = np.dstack((screen, screen))
+        self.remember = screen
         return state
 
     def is_done(self):
-        screen = ImageGrab.grab().convert('L')
+        screen = pag.screenshot(region=self.done_region).convert('L')
         screen = np.array(screen)
         # Check the Bottom of Screen
-        done = (screen[len(screen)//2:,:]<245).any()
+        done = (screen<128).any()
         if self.done_mem == False and done == True:
             return True
         else:
@@ -47,23 +53,16 @@ class Env:
         pag.press(key)
 
         done = self.is_done()
-        _screen = self.capture()
-        state = np.dstack((self.screen, _screen))
-        self.screen = _screen
+        screen = self.capture()
+        state = np.dstack((self.remember, screen))
+        self.remember = screen
         reward = -1 if done else 0.1
         return state, reward, done
     
     def capture(self):
-        s = time.time()
-        screen = ImageGrab.grab().convert('L')
+        screen = pag.screenshot(region=self.state_region).convert('L').resize(self.target_size)
         screen = np.array(screen, dtype=float)
-        shape = screen.shape
-        # Optimized 1920*1080
-        screen = screen[shape[0]//6:shape[0]//3, shape[1]//3:-shape[1]//3]
-        screen = cv2.resize(screen, dsize=(128, 64))
-        screen = 255-screen
-        screen = screen/255.
-        e = time.time()
+        screen = (255-screen)/255.
         return screen
 
     def close(self):

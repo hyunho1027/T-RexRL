@@ -33,10 +33,9 @@ git clone https://github.com/hyunho1027/T-RexRL
 ## Requirements
 - Python 3.7
 - Tensorflow 2.2
-- image
-- cv2
-- pyautogui
 - webbrowser
+- pyautogui
+- cv2
 
 ## Usage
 ```cmd
