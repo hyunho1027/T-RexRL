@@ -34,8 +34,8 @@ class Env:
             time.sleep(1)
 
         is_start = False
-        pag.press('up')
         while not is_start:
+            pag.press('up')
             screen = pag.screenshot(region=self.done_region).convert('L')
             screen = np.array(screen)
             # Check the Bottom of Screen
