@@ -10,7 +10,8 @@ class Env:
         self.episode = -1
         self.refresh = 10
         self.remember = None
-        self.size = pag.screenshot().convert('L').size
+        self.size = pag.screenshot().size
+        print(self.size)
         self.target_size = (128,64)
 
         # Optimized 1920*1080
