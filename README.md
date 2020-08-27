@@ -35,7 +35,6 @@ git clone https://github.com/hyunho1027/T-RexRL
 - Tensorflow 2.2
 - webbrowser
 - pyautogui
-- cv2
 
 ## Usage
 ```cmd
