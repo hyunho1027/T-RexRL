@@ -39,6 +39,7 @@ class Env:
             screen = np.array(screen)
             # Check the done_region of Screen
             is_start = (screen>128).all()
+        time.sleep(1)
         pag.press('up')
 
         screen = self.screenshot()
@@ -77,4 +78,7 @@ class Env:
         pag.hotkey('ctrl', 'w')
 
     def alt_tab(self):
-        pag.keyDown('alt'); pag.press('tab') ; pag.keyUp('alt')
+        pag.keyDown('alt')
+        pag.press('tab')
+        pag.keyUp('alt')
+
