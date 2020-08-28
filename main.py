@@ -4,8 +4,13 @@ import keyboard
 from dqn import DQN
 from env import Env
 
+training = True
+load_model = False
+
 if __name__=="__main__":
     agent = DQN()
+    if load_model : 
+        agent.load("models/model")
     env = Env()
     step = 0
     losses = []
@@ -24,22 +29,25 @@ if __name__=="__main__":
                 s = ns
                 score += r
             
-            if step > 500:
+            if training and step > 500:
                 env.alt_tab()
+                
                 for _ in range(8):
                     losses.append(agent.train())
-                env.alt_tab()
 
-            if losses:
                 agent.epsilon_decay()
                 if ep%5==0:
                     agent.update_target()
                 if ep%10==0:
                     agent.save("./models/model")
-            
-            loss = tf.reduce_mean(losses)
-            print(f"{ep+1} Episode / Step : {step} / Score : {score:.1f} / Loss : {loss:.4f} / Epsilon : {agent.e:.4f}")
-            agent.write(score, loss, agent.e, ep+1)
+                
+                loss = tf.reduce_mean(losses)
+                print(f"{ep+1} Episode / Step : {step} / Score : {score:.1f} / Loss : {loss:.4f} / Epsilon : {agent.e:.4f}")
+                agent.write(score, loss, agent.e, ep+1)
+                
+                env.alt_tab()
+            else:
+                print(f"{ep+1} Episode / Step : {step} / Score : {score:.1f} /")
 
     except Exception as e:
         traceback.print_exc()

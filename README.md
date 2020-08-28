@@ -38,6 +38,5 @@ git clone https://github.com/hyunho1027/T-RexRL
 
 ## Usage
 ```cmd
-python train.py
-python run.py
+python main.py
 ```
