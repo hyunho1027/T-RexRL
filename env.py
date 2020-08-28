@@ -8,7 +8,6 @@ class Env:
         print("LET\'S START!")
         self.done_mem = True
         self.episode = -1
-        self._step = 0
         self.refresh = 10
         self.remember = None
         self.size = pag.screenshot().size
@@ -27,7 +26,6 @@ class Env:
 
     def reset(self):
         self.episode += 1
-        self._step = 0
         self.done_mem=True
         if self.episode%self.refresh == 0:
             pag.press('f5')
@@ -59,14 +57,13 @@ class Env:
             return False
 
     def step(self, action):
-        self._step += 1
         key = 'up' if action == 1 else 'down'
         pag.press(key)
 
-        done = self.is_done()
         screen = self.capture()
         state = np.dstack((self.remember, screen))
         self.remember = screen
+        done = self.is_done()
         reward = -1 if done else 0.1
         return state, reward, done
     
