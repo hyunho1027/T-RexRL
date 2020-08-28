@@ -41,7 +41,7 @@ if __name__=="__main__":
                     agent.save("./models/model")
                 
                 loss = tf.reduce_mean(losses)
-                print(f"{ep+1} Episode / Step : {step} / Score : {score:.1f} /",
+                print(f"{ep+1} Episode / Step : {step} / Score : {score:.1f} / " +\
                       f"Loss : {loss:.4f} / Epsilon : {agent.e:.4f}")
                 agent.write(score, loss, agent.e, ep+1)
                 env.alt_tab()
