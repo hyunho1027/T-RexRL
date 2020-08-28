@@ -36,7 +36,7 @@ class DQN:
         self.e_init = 0.8
         self.e_min = 0.01
         self.e = self.e_init
-        self.e_decay = 0.995
+        self.e_decay = 0.005
         self.gamma = 0.99
 
         self.batch_size = 64
@@ -45,8 +45,8 @@ class DQN:
         now = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
         self.writer = tf.summary.create_file_writer(f"./summaries/{now}")
 
-    def get_action(self, s):
-        return tf.argmax(self.net(s), axis=1)[0] if random.random() > self.e else random.randint(0,1)
+    def get_action(self, s, training=True):
+        return random.randint(0,1) if random.random() < self.e and  training else tf.argmax(self.net(s), axis=1)[0]
 
     def append_sample(self, s, a, r, ns, d):
         self.mem.append((s,a,r,ns,d))
@@ -77,7 +77,7 @@ class DQN:
         self.target_net.set_weights(self.net.get_weights())
 
     def epsilon_decay(self):
-        self.e = max(self.e_min, self.e*self.e_decay)
+        self.e = max(self.e_min, self.e-self.e_decay)
 
     def save(self, path):
         self.net.save_weights(path)

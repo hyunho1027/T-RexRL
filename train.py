@@ -1,8 +1,8 @@
-import traceback
 import tensorflow as tf
+import traceback
+import keyboard
 from dqn import DQN
 from env import Env
-import keyboard
 
 if __name__=="__main__":
     agent = DQN()
@@ -26,7 +26,7 @@ if __name__=="__main__":
             
             if step > 500:
                 env.alt_tap()
-                for _ in range(4):
+                for _ in range(8):
                     losses.append(agent.train())
                 env.alt_tap()
 

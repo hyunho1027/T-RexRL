@@ -40,6 +40,7 @@ class Env:
             screen = np.array(screen)
             # Check the Bottom of Screen
             is_start = (screen>128).all()
+        pag.press('up')
 
         screen = self.capture()
         state = np.dstack((screen, screen))
