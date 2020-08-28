@@ -10,14 +10,16 @@ class Net(tf.keras.Model):
         self.hidden_size = 128
         self.output_size = 2
 
-        self.conv1 = tf.keras.layers.Conv2D(filters=self.hidden_size, kernel_size=[3,3], padding='same', activation='relu')
+        self.conv1 = tf.keras.layers.Conv2D(filters=self.hidden_size, kernel_size=[3,3],
+                                            padding='same', activation='relu')
         self.pool1 = tf.keras.layers.MaxPool2D(pool_size=(2,2))
-        self.conv2 = tf.keras.layers.Conv2D(filters=self.hidden_size, kernel_size=[3,3], padding='same', activation='relu')
+        self.conv2 = tf.keras.layers.Conv2D(filters=self.hidden_size, kernel_size=[3,3],
+                                            padding='same', activation='relu')
         self.pool2 = tf.keras.layers.MaxPool2D(pool_size=(2,2))
         self.flat = tf.keras.layers.Flatten()
         self.fc1 = tf.keras.layers.Dense(self.hidden_size, activation='relu')
         self.fc2 = tf.keras.layers.Dense(self.hidden_size, activation='relu')
-        self.q = tf.keras.layers.Dense(self.output_size, activation='softmax')
+        self.q = tf.keras.layers.Dense(self.output_size)
 
     def call(self, x):
         x = tf.convert_to_tensor(x, tf.float32)

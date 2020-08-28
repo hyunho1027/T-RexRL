@@ -25,10 +25,10 @@ if __name__=="__main__":
                 score += r
             
             if step > 500:
-                env.alt_tap()
+                env.alt_tab()
                 for _ in range(8):
                     losses.append(agent.train())
-                env.alt_tap()
+                env.alt_tab()
 
             if losses:
                 agent.epsilon_decay()
