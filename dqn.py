@@ -52,7 +52,10 @@ class DQN:
         self.writer = tf.summary.create_file_writer(f"./summaries/{now}")
 
     def get_action(self, s, training=True):
-        return random.randint(0,1) if random.random() < self.e and  training else tf.argmax(self.net(s), axis=1)[0]
+        if random.random() < self.e and training:
+            return random.randint(0,1)
+        else:
+            return tf.argmax(self.net(s), axis=1)[0]
 
     def append_sample(self, s, a, r, ns, d):
         self.mem.append((s,a,r,ns,d))
