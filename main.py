@@ -4,8 +4,8 @@ import keyboard
 from dqn import DQN
 from env import Env
 
-training = True
-load_model = False
+training = False
+load_model = True
 
 if __name__=="__main__":
     agent = DQN()
@@ -22,7 +22,7 @@ if __name__=="__main__":
             while not d:
                 if keyboard.is_pressed('q'):
                     raise Exception("Quit.")
-                a = agent.get_action([s])
+                a = agent.get_action([s], training)
                 ns, r, d = env.step(a)
                 if training:
                     agent.append_sample(s,a,r,ns,d)
