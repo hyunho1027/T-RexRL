@@ -77,8 +77,3 @@ class Env:
         pag.press('f11')
         pag.hotkey('ctrl', 'w')
 
-    def alt_tab(self):
-        pag.keyDown('alt')
-        pag.press('tab')
-        pag.keyUp('alt')
-
