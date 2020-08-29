@@ -4,8 +4,8 @@ import keyboard
 from dqn import DQN
 from env import Env
 
-training = False
-load_model = True
+training = True
+load_model = False
 
 if __name__=="__main__":
     agent = DQN()
