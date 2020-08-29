@@ -55,7 +55,7 @@ class DQN:
         if random.random() < self.e and training:
             return random.randint(0,1)
         else:
-            return tf.argmax(self.net(s), axis=1)[0]
+            return tf.argmax(self.net(s, training=training), axis=1)[0]
 
     def append_sample(self, s, a, r, ns, d):
         self.mem.append((s,a,r,ns,d))

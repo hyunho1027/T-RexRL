@@ -4,8 +4,8 @@ import keyboard
 from dqn import DQN
 from env import Env
 
-training = True
-load_model = False
+training = False
+load_model = True
 
 if __name__=="__main__":
     agent = DQN()
@@ -30,7 +30,6 @@ if __name__=="__main__":
                 score += r
             
             if training and step > 500:
-                env.alt_tab()
                 for _ in range(8):
                     losses.append(agent.train())
 
@@ -44,7 +43,6 @@ if __name__=="__main__":
                 print(f"{ep+1} Episode / Step : {step} / Score : {score:.1f} / " +\
                       f"Loss : {loss:.4f} / Epsilon : {agent.e:.4f}")
                 agent.write(score, loss, agent.e, ep+1)
-                env.alt_tab()
             else:
                 print(f"{ep+1} Episode / Step : {step} / Score : {score:.1f} /")
 
