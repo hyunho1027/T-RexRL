@@ -24,7 +24,8 @@ if __name__=="__main__":
                     raise Exception("Quit.")
                 a = agent.get_action([s])
                 ns, r, d = env.step(a)
-                agent.append_sample(s,a,r,ns,d)
+                if training:
+                    agent.append_sample(s,a,r,ns,d)
                 step += 1
                 s = ns
                 score += r
