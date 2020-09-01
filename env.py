@@ -35,10 +35,7 @@ class Env:
         is_start = False
         while not is_start:
             pag.press('up')
-            screen = pag.screenshot(region=self.done_region).convert('L')
-            screen = np.array(screen)
-            # Check the done_region of Screen
-            is_start = (screen>128).all()
+            is_start = not self.is_done()
         time.sleep(1)
         pag.press('up')
 
