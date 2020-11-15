@@ -1,4 +1,5 @@
 import tensorflow as tf
+import numpy as np
 from collections import deque
 import random
 import datetime
@@ -62,11 +63,11 @@ class DQN:
 
     def train(self):
         mini = random.sample(self.mem, min(len(self.mem), self.batch_size))
-        s = [m[0] for m in mini]
-        a = tf.convert_to_tensor([m[1] for m in mini])
-        r = tf.convert_to_tensor([m[2] for m in mini])
-        ns = [m[3] for m in mini]
-        d = tf.convert_to_tensor([m[4] for m in mini])
+        s  = np.stack([m[0] for m in mini], axis=0)
+        a  = np.stack([m[1] for m in mini], axis=0)
+        r  = np.stack([m[2] for m in mini], axis=0)
+        ns = np.stack([m[3] for m in mini], axis=0)
+        d  = np.stack([m[4] for m in mini], axis=0).astype(np.float32)
         return self.train_step(s,a,r,ns,d)
 
     @tf.function
